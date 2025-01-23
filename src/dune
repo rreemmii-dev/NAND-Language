@@ -1,0 +1,12 @@
+(ocamllex
+ (modules lexer))
+
+(menhir
+ (modules parser))
+
+(executable
+ (name interpreter)
+ (promote (until-clean))
+ (modules lexer parser ast interpreter)
+ (libraries yojson)
+ (flags ()))

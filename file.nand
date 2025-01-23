@@ -1,0 +1,309 @@
+/* ----- LOGICAL OPERATORS ----- */
+
+fun not(x) {
+    return nand(x, x);
+}
+
+fun and(x, y) {
+    return not(nand(x, y));
+}
+
+fun or(x, y) {
+    return nand(not(x), not(y));
+}
+
+fun nor(x, y) {
+    return not(or(x, y));
+}
+
+fun xor(x, y) {
+    return and(or(x, y), or(not(x), not(y)));
+}
+
+fun NOT(X) {
+    RES{64} = 0;
+    for i = 0 to 63 {
+        RES[i] = not(X[i]);
+    }
+    return RES;
+}
+
+fun AND(X, Y) {
+    RES{64} = 0;
+    for i = 0 to 63 {
+        RES[i] = and(X[i], Y[i]);
+    }
+    return RES;
+}
+
+fun OR(X, Y) {
+    RES{64} = 0;
+    for i = 0 to 63 {
+        RES[i] = or(X[i], Y[i]);
+    }
+    return RES;
+}
+
+fun NOR(X, Y) {
+    RES{64} = 0;
+    for i = 0 to 63 {
+        RES[i] = nor(X[i], Y[i]);
+    }
+    return RES;
+}
+
+fun XOR(X, Y) {
+    RES{64} = 0;
+    for i = 0 to 63 {
+        RES[i] = xor(X[i], Y[i]);
+    }
+    return RES;
+}
+
+
+/* ----- CONSTANTS & UTILS ----- */
+
+fun ZERO() {
+    Z{64} = 0;
+    return Z;
+}
+
+fun ONE() {
+    O{64} = 0;
+    O[0] = 1;
+    return O;
+}
+
+fun COPY(X) {
+    RES{64} = 0;
+    for i = 0 to 63 {
+        RES[i] = X[i];
+    }
+    return RES;
+}
+
+
+/* ----- CONDITIONS ----- */
+
+fun is_zero(X) {
+    res = 1;
+    for i = 0 to 63 {
+        res = and(res, not(X[i]));
+    }
+    return res;
+}
+
+fun is_non_zero(X) {
+    return not(is_zero(X));
+}
+
+fun is_negative(X) {
+    return X[63];
+}
+
+fun is_non_negative(X) {
+    return not(is_negative(X));
+}
+
+fun is_positive(X) {
+    return and(is_non_negative(X), not(is_zero(X)));
+}
+
+fun is_non_positive(X) {
+    return not(is_positive(X));
+}
+
+fun is_odd(X) {
+    return X[0];
+}
+
+fun is_even(X) {
+    return not(is_odd(X));
+}
+
+fun if_then_else(x_chosen, x, y) {
+    return or(and(x_chosen, x), and(not(x_chosen), y));
+}
+
+fun IF_THEN_ELSE(x_chosen, X, Y) {
+    RES{64} = 0;
+    for i = 0 to 63 {
+        RES[i] = if_then_else(x_chosen, X[i], Y[i]);
+    }
+    return RES;
+}
+
+
+/* ----- ARITHMETIC OPERATORS ----- */
+
+fun half_adder(x, y) {
+    carry = and(x, y);
+    res = xor(x, y);
+    return (carry, res);
+}
+
+fun adder(x, y, z) {
+    carry1, res1 = half_adder(x, y);
+    carry2, res2 = half_adder(res1, z);
+    return (or(carry1, carry2), res2);
+}
+
+fun ADD(X, Y) {
+    carry = 0;
+    SUM{64} = 0;
+    for i = 0 to 63 {
+        c, r = adder(X[i], Y[i], carry);
+        SUM[i] = r;
+        carry = c;
+    }
+    return SUM;
+}
+
+fun INCR(X) {
+    return ADD(X, ONE());
+}
+
+fun MINUS(X) {
+    Y = NOT(X);
+    return INCR(Y);
+}
+
+fun SUB(X, Y) {
+    MINUS_Y = MINUS(Y);
+    return ADD(X, MINUS_Y);
+}
+
+fun DECR(X) {
+    return SUB(X, ONE());
+}
+
+fun LSL(X) {
+    RES{64} = 0;
+    for i = 1 to 63 {
+        RES[i] = X[i - 1];
+    }
+    return RES;
+}
+
+fun LSR(X) {
+    RES{64} = 0;
+    for i = 0 to 62 {
+        RES[i] = X[i + 1];
+    }
+    return RES;
+}
+
+fun MULT(X, Y) {
+    RES = ZERO();
+    for i = 0 to 63 {
+        RES = IF_THEN_ELSE(X[i], ADD(RES, Y), RES);
+        Y = LSL(Y);
+    }
+    return RES;
+}
+
+fun DIV(X, Y) {
+    is_neg = xor(is_negative(X), is_negative(Y));
+    X = ABS(X);
+    Y = ABS(Y);
+    RES{64} = 0;
+    X2{64} = 0;
+    for i = 63 to 0 {
+        X2 = LSL(X2);
+        X2[0] = X[i];
+        RES = LSL(RES);
+        RES[0] = if_then_else(is_non_negative(SUB(X2, Y)), True, False);
+        X2 = IF_THEN_ELSE(is_non_negative(SUB(X2, Y)), SUB(X2, Y), X2);
+    }
+    RES = IF_THEN_ELSE(is_neg, MINUS(RES), RES);
+    return RES;
+}
+
+fun MOD(X, M) {
+    M = ABS(M);
+    RES = SUB(X, MULT(DIV(X, M), M));
+    RES = IF_THEN_ELSE(is_negative(RES), ADD(RES, M), RES);
+    return RES;
+}
+
+fun POW(X, N) {
+    RES = ONE();
+    continue = 1;
+    for i = 0 to 63 {
+        RES = IF_THEN_ELSE(and(is_odd(N), continue), MULT(X, RES), RES);
+        X = IF_THEN_ELSE(continue, MULT(X, X), X);
+        N = IF_THEN_ELSE(continue, LSR(N), N);
+        continue = not(is_zero(N));
+    }
+    return RES;
+}
+
+fun MAX(X, Y) {
+    return IF_THEN_ELSE(is_positive(SUB(Y, X)), Y, X);
+}
+
+fun MIN(X, Y) {
+    return IF_THEN_ELSE(is_negative(SUB(Y, X)), Y, X);
+}
+
+fun ABS(X) {
+    return IF_THEN_ELSE(is_negative(X), MINUS(X), X);
+}
+
+
+/* ----- MISCELLANEOUS ----- */
+
+fun switch(instr, x, y) {
+    return (if_then_else(instr, y, x), if_then_else(instr, x, y));
+}
+
+fun SWITCH(instr, X, Y) {
+    return (IF_THEN_ELSE(instr, Y, X), IF_THEN_ELSE(instr, X, Y));
+}
+
+fun ALU(instr, X, Y) {
+    /*
+        0 -> X and Y
+        1 -> X or Y
+        2 -> X xor Y
+        3 -> not X
+        4 -> X + Y
+        5 -> X + 1
+        6 -> X - Y
+        7 -> X - 1
+    */
+    return IF_THEN_ELSE(instr[2],
+        IF_THEN_ELSE(instr[1],
+            IF_THEN_ELSE(instr[0],
+                DECR(X),
+                SUB(X, Y)
+            ),
+            IF_THEN_ELSE(instr[0],
+                INCR(X),
+                ADD(X, Y)
+            )
+        ),
+        IF_THEN_ELSE(instr[1],
+            IF_THEN_ELSE(instr[0],
+                NOT(X),
+                XOR(X, Y)
+            ),
+            IF_THEN_ELSE(instr[0],
+                OR(X, Y),
+                AND(X, Y)
+            )
+        )
+    );
+}
+
+
+fun main() {
+    X = ZERO();
+    X[2] = 1;
+    X = INCR(X);
+    Y = ZERO();
+    Y[3] = 1;
+    debug int64 X;  /* 5 */
+    debug int64 Y;  /* 8 */
+    debug int64 MULT(X, Y);  /* 5 * 8 = 40 */
+}
