@@ -1,20 +1,20 @@
 # NAND programming language
 
 
-## Introduction
+A programming language to play around and create boolean functions while being strictly limited to operations involving NAND gates.
 
-The NAND programming language is designed around the NAND gate, which is functionally complete. This means that any boolean function ($\set{0, 1}^n \to \set{0, 1}^m$) can be implemented using only combinations of NAND gates.
-
-This language allows you to play around and create boolean functions while being strictly limited to operations involving NAND gates.
+The NAND gate is functionally complete, which means that any boolean function ($\set{0, 1}^n \to \set{0, 1}^m$) can be implemented using only combinations of NAND gates.
 
 Still, it is **not** a Turing-complete language: while loops are not allowed.
+
+![a screenshot of the NAND programming language](https://rreemmii-dev.github.io/nand-language/main.png)
 
 
 ## Installation and Use
 
 ### Build the interpreter
 
-To build the interpreter, you will need to have `dune` installed.
+To build the interpreter, you need to have `dune` installed.
 
 ```bash
 cd src
@@ -25,7 +25,7 @@ mv src/interpreter.exe .
 
 ### Run the interpreter
 
-After buliding the interpreter, you can execute it on your `.nand` source file.
+After building the interpreter, you can execute it on your `.nand` source file.
 
 ```bash
 ./interpreter.exe file.nand
